@@ -9,6 +9,8 @@ import subprocess
 import threading
 import tkinter as tk
 
+from ctypes import wintypes
+
 from PIL import Image, ImageDraw, ImageTk
 
 from . import theme as T
@@ -109,6 +111,47 @@ def _hwnd(win) -> int:
         return ctypes.windll.user32.GetParent(win.winfo_id()) or win.winfo_id()
     except Exception:
         return 0
+
+
+_ALT_PROCS: dict = {}   # hwnd → (proc nuevo, proc original)
+_ALT_KEEP: list = []    # los procs no se liberan nunca (Windows podría llamarlos tarde)
+
+
+def block_alt_menu(win):
+    """Al soltar Alt, Windows abre el menú de la ventana (Restaurar, Mover, Tamaño…) y la app queda
+    frenada mientras está abierto. Como el zoom es Alt + rueda, se descarta ese comando (SC_KEYMENU sin
+    letra). Alt+Espacio y Alt+F4 siguen funcionando."""
+    if os.name != "nt":
+        return
+    hwnd = _hwnd(win)
+    if not hwnd or hwnd in _ALT_PROCS:
+        return
+    try:
+        u32 = ctypes.windll.user32
+        WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, wintypes.HWND, wintypes.UINT, wintypes.WPARAM,
+                                     wintypes.LPARAM)
+        u32.SetWindowLongPtrW.restype = ctypes.c_void_p
+        u32.SetWindowLongPtrW.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_void_p]
+        u32.CallWindowProcW.restype = ctypes.c_ssize_t
+        u32.CallWindowProcW.argtypes = [ctypes.c_void_p, wintypes.HWND, wintypes.UINT, wintypes.WPARAM,
+                                        wintypes.LPARAM]
+        WM_SYSCOMMAND, SC_KEYMENU, WM_NCDESTROY = 0x0112, 0xF100, 0x0082
+        state = {}
+
+        def proc(h, msg, wp, lp):
+            if msg == WM_SYSCOMMAND and (wp & 0xFFF0) == SC_KEYMENU and lp == 0:
+                return 0
+            res = u32.CallWindowProcW(state["old"], h, msg, wp, lp)
+            if msg == WM_NCDESTROY:
+                _ALT_PROCS.pop(h, None)
+            return res
+
+        new = WNDPROC(proc)
+        state["old"] = u32.SetWindowLongPtrW(hwnd, -4, ctypes.cast(new, ctypes.c_void_p))  # GWLP_WNDPROC
+        _ALT_PROCS[hwnd] = (new, state["old"])
+        _ALT_KEEP.append(new)
+    except Exception:
+        pass
 
 
 def _colorref(hex_color: str) -> int:
@@ -1016,6 +1059,7 @@ class Modal(tk.Toplevel):
         if resizable:
             self.minsize(S(width * 0.8), S(height * 0.7))
         dark_titlebar(self)
+        block_alt_menu(self)
         self.bind("<Escape>", lambda e: self.close())
         self.protocol("WM_DELETE_WINDOW", self.close)
 

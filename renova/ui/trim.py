@@ -129,7 +129,7 @@ class VideoView(tk.Canvas):
 
 # ── Línea de tiempo ────────────────────────────────────────────────────────────
 class TrimTimeline(tk.Canvas):
-    """Rueda = zoom en el cursor · Ctrl o Shift + rueda, o la barra de abajo = desplazar.
+    """Alt + rueda = zoom en el cursor · rueda (o Ctrl + rueda) y la barra de abajo = desplazar.
     Las miniaturas se repiten a su tamaño real (no se estiran) y al hacer zoom se piden más."""
 
     SY1, SH = 18, 52
@@ -261,12 +261,12 @@ class TrimTimeline(tk.Canvas):
             self.set_view(t - span * 0.1, t + span * 0.9)
 
     def _wheel(self, e):
-        if e.state & (0x1 | 0x4):  # Shift o Ctrl + rueda: desplazar hacia los costados
+        if not e.state & 0x20000:  # sin Alt (rueda sola, Ctrl o Shift): desplazar hacia los costados
             span = self.v1 - self.v0
             d = span * 0.15 * (e.delta / 120)
             self.set_view(self.v0 - d, self.v1 - d)
             return
-        x = self.winfo_pointerx() - self.winfo_rootx()
+        x = self.winfo_pointerx() - self.winfo_rootx()  # Alt + rueda: zoom en el cursor (como Premiere)
         anchor = self.x2t(x)
         frac = (anchor - self.v0) / max(1e-6, self.v1 - self.v0)
         span = (self.v1 - self.v0) * (0.7 if e.delta > 0 else 1 / 0.7)
@@ -595,8 +595,8 @@ class TrimEditor(tk.Frame):
         right.grid(row=0, column=2, sticky="e")
         self.zoom_btn = Button(right, icon=G_ZOOM_IN, variant="ghost", height=34, icon_font=F.icon_sm,
                                command=self.toggle_zoom,
-                               tooltip="Zoom a la selección / ver todo (también con la rueda del mouse "
-                                       "sobre la línea de tiempo; Ctrl + rueda o la barra de abajo para "
+                               tooltip="Zoom a la selección / ver todo (también con Alt + rueda del mouse "
+                                       "sobre la línea de tiempo; la rueda o la barra de abajo para "
                                        "desplazarte)")
         self.zoom_btn.pack(side="right", padx=(S(4), 0))
         Button(right, text="Reproducir selección", icon=G_REPEAT, variant="secondary", height=34, padx=12,
@@ -1028,8 +1028,8 @@ class TrimDialog(Modal):
         Button(foot, text="Cancelar", variant="ghost", command=self.close).pack(side="right", padx=(0, S(8)))
         if item.trim:
             Button(foot, text="Quitar recorte", icon=G.DELETE, variant="danger", command=self._remove).pack(side="left")
-        tk.Label(foot, text="Espacio reproducir · I / O marcar · S imán · ← → un cuadro · rueda: zoom · "
-                            "Ctrl + rueda: desplazar", font=F.small, fg=T.TEXT_3, bg=T.BG_2).pack(
+        tk.Label(foot, text="Espacio reproducir · I / O marcar · S imán · ← → un cuadro · Alt + rueda: zoom · "
+                            "rueda: desplazar", font=F.small, fg=T.TEXT_3, bg=T.BG_2).pack(
             side="left", padx=S(12))
 
         self.editor = TrimEditor(self, app, duration, s, e, mode="range")

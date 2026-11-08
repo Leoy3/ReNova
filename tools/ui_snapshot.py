@@ -663,6 +663,51 @@ elif SCENARIO == "trimlong":
         (100, lambda: dlg().close()),
     ]
 
+elif SCENARIO == "wheel":
+    # Alt + rueda = zoom; rueda sola o con Ctrl = desplazar (en Recortar y en el recorte antes de descargar)
+    os.environ["RENOVA_MUTE_PREVIEW"] = "1"
+    from renova import core as core_mod
+    media_dir = os.path.join(os.environ["TMP"], "renova_test", "media")
+    local = os.path.join(media_dir, "long_1080.mp4")
+    item = core_mod.DownloadItem("https://example.com/v", "video", "1080")
+    item.title, item.duration, item.info = "Video largo (prueba)", 240.0, {"formats": []}
+    a.downloads.mgr.fetch_preview = lambda it, cancel, on_info, on_progress, on_done: on_done(local, None)
+    E = lambda state, delta: type("E", (), {"state": state, "delta": delta, "x": 0, "y": 0})()  # noqa: E731
+
+    def report(name, tl, v0_attr, scale):
+        out = []
+        for label, state in (("rueda", 0), ("Ctrl+rueda", 0x0004), ("Shift+rueda", 0x0001), ("Alt+rueda", 0x20000)):
+            before = (round(getattr(tl, v0_attr), 2), round(scale(), 3))
+            tl._wheel(E(state, -120))
+            after = (round(getattr(tl, v0_attr), 2), round(scale(), 3))
+            kind = "zoom" if after[1] != before[1] else ("desplaza" if after[0] != before[0] else "nada")
+            out.append(f"{label}: {kind}")
+        print(name, "·", " | ".join(out), flush=True)
+
+    def edit_test():
+        tl = a.edit.editor.timeline
+        tl.zoom(4.0, anchor=60.0)
+        tl.set_view(50.0)
+        report("Recortar", tl, "v0", lambda: tl.pps)
+
+    def dlg_test():
+        from renova.ui.trim import TrimDialog
+        TrimDialog(a, item, lambda r: None)
+
+    def dlg_report():
+        d = find_toplevel("TrimDialog")
+        tl = d.editor.timeline
+        tl.set_view(100.0, 110.0)
+        report("Recorte antes de descargar", tl, "v0", lambda: tl.v1 - tl.v0)
+        d.close()
+
+    steps += [
+        (300, lambda: (a.show_tab("edit"), a.edit.load([local]))),
+        (4000, edit_test),
+        (300, dlg_test),
+        (3000, dlg_report),
+    ]
+
 root.after(100, run_steps)
 root.after(180000, lambda: os._exit(1))
 a.run()

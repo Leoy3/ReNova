@@ -3,6 +3,11 @@
 Cada viñeta de la versión actual aparece en el aviso de actualización dentro del programa
 (tools/build.py la copia a `latest.json`). Escribilas para quien usa ReNova, no para quien lo programa.
 
+## 2.4.4
+
+- Zoom de la línea de tiempo con Alt + rueda del mouse, como en Premiere (en Recortar y en el recorte antes de descargar). La rueda sola o con Ctrl desplaza hacia los costados.
+- Corregido: al soltar Alt se abría el menú de la ventana (Restaurar, Mover…) y la vista previa quedaba congelada.
+
 ## 2.4.3
 
 - Recortar: la vista previa ya no se congela al hacer zoom mientras reproduce; si el video se traba, se recupera solo sin cortar el sonido.

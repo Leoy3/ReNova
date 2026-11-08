@@ -18,7 +18,7 @@ from ..settings import Settings
 from . import theme as T
 from .cards import ThumbLoader
 from .theme import F, G, S
-from .widgets import (Button, PopupMenu, Toast, attach_tooltip, confirm, dark_titlebar, flash_window,
+from .widgets import (Button, PopupMenu, Toast, attach_tooltip, block_alt_menu, confirm, dark_titlebar, flash_window,
                       install_wheel_router, open_path)
 
 log = logging.getLogger("renova.app")
@@ -243,6 +243,7 @@ class App:
         self._build()
         self._restore_geometry()
         dark_titlebar(root)
+        block_alt_menu(root)  # soltar Alt no abre el menú de la ventana (zoom = Alt + rueda)
         root.deiconify()
         install_wheel_router(root)
         self._bind_keys()

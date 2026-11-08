@@ -5,7 +5,7 @@
   Arrastrar un borde recorta; con Ctrl el recorte corre lo que sigue.
 · Cuchilla (C): clic corta el clip en ese punto.
 · Imán (S): los movimientos se pegan al cabezal, a los cortes y a las marcas.
-· Rueda = zoom, Shift + rueda = desplazar, barra inferior = desplazar / zoom por los extremos."""
+· Alt + rueda = zoom, rueda (o Ctrl + rueda) = desplazar, barra inferior = desplazar / zoom por los extremos."""
 
 from __future__ import annotations
 
@@ -217,10 +217,10 @@ class SeqTimeline(tk.Canvas):
         if self._drag:
             return
         self._gesture()
-        if e.state & (SHIFT | CTRL):  # Shift o Ctrl + rueda: desplazar hacia los costados
+        if not e.state & ALT:  # sin Alt (rueda sola, Ctrl o Shift): desplazar hacia los costados
             self.set_view(self.v0 - self.visible_span() * 0.12 * (e.delta / 120))
             return
-        x = self.winfo_pointerx() - self.winfo_rootx()
+        x = self.winfo_pointerx() - self.winfo_rootx()  # Alt + rueda: zoom en el cursor (como Premiere)
         self.zoom(1.25 if e.delta > 0 else 0.8, anchor=self.x2t(max(self.x0, min(self.x1, x))))
 
     def _gesture(self):

@@ -197,7 +197,7 @@ SHORTCUTS = [
     ("Recorte en cadena", "Ctrl+arrastrar borde"), ("Recortar hasta el cabezal", "Q / W"),
     ("Corte anterior / siguiente", "↑ / ↓"),
     ("Cuadro anterior / siguiente", "← / →"), ("5 cuadros", "Shift+← / →"),
-    ("Zoom / ver todo", "+ / − / \\"), ("Desplazar la línea de tiempo", "Ctrl + rueda"), ("Copiar / cortar / pegar", "Ctrl+C / X / V"),
+    ("Zoom / ver todo", "Alt + rueda · + / − / \\"), ("Desplazar la línea de tiempo", "Rueda o Ctrl + rueda"), ("Copiar / cortar / pegar", "Ctrl+C / X / V"),
     ("Pegar insertando", "Ctrl+Shift+V"), ("Seleccionar todo / nada", "Ctrl+A / Ctrl+Shift+A"),
     ("Deshacer / rehacer", "Ctrl+Z / Ctrl+Y"),
 ]
@@ -396,7 +396,7 @@ class SequenceEditor(tk.Frame):
         body = tk.Frame(dlg, bg=T.BG, padx=S(24), pady=S(18))
         body.pack(fill="both", expand=True)
         tk.Label(body, text="Atajos de teclado", font=F.h2, fg=T.TEXT, bg=T.BG, anchor="w").pack(fill="x")
-        tk.Label(body, text="Los mismos que en Premiere Pro. Con el mouse: rueda = zoom, Ctrl + rueda = desplazar, "
+        tk.Label(body, text="Los mismos que en Premiere Pro. Con el mouse: Alt + rueda = zoom, rueda = desplazar, "
                             "clic derecho = más opciones.", font=F.small, fg=T.TEXT_3, bg=T.BG, anchor="w",
                  justify="left", wraplength=S(660)).pack(fill="x", pady=(S(4), S(12)))
         grid = tk.Frame(body, bg=T.BG)
