@@ -1,0 +1,12 @@
+# Entorno y compilaciones (se regeneran con tools/build.py)
+.venv/
+build/
+dist/
+__pycache__/
+*.pyc
+
+# Configuración local de Claude Code
+.claude/
+
+# Material de diseño privado (chat y capturas de referencia)
+design_extracted/

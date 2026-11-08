@@ -1,0 +1,6 @@
+# Entorno de desarrollo/build (Python 3.12, Windows 64 bits)
+yt-dlp[default,curl-cffi]==2026.10.26
+yt-dlp-ejs==0.8.0
+pillow==13.0.0
+tkinterdnd2==0.4.3
+pyinstaller==6.22.3
