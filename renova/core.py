@@ -1021,6 +1021,37 @@ TARGET_OPTIONS = {
 }
 
 
+VIDEO_EXTS = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".flv", ".wmv", ".m4v", ".ts", ".mts", ".m2ts", ".3gp",
+              ".mpg", ".mpeg", ".ogv", ".vob"}
+_FORMAT_NAMES = {"matroska": "MKV", "mov": "MP4", "mp4": "MP4", "avi": "AVI", "flv": "FLV", "asf": "WMV",
+                 "mpegts": "TS", "mpeg": "MPG", "gif": "GIF", "apng": "APNG", "webp_pipe": "WEBP", "mp3": "MP3",
+                 "wav": "WAV", "flac": "FLAC", "ogg": "OGG", "aac": "AAC", "aiff": "AIFF", "m4a": "M4A"}
+
+
+def sniff_image(path: str):
+    """Mira el contenido (no la extensión): ('PNG', ancho, alto, animada) si es una imagen, si no None."""
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            fmt = (im.format or "").upper().replace("JPEG", "JPG")
+            animated = getattr(im, "n_frames", 1) > 1 and fmt in ("GIF", "PNG", "WEBP")
+            return fmt, im.width, im.height, animated
+    except Exception:
+        return None
+
+
+def format_label(path: str, pr: dict) -> str:
+    """Formato para mostrar: la extensión si es conocida; si no (o no coincide), lo que detecta ffprobe."""
+    ext = Path(path).suffix.lower()
+    if ext in VIDEO_EXTS or ext in AUDIO_EXTS or ext in IMAGE_EXTS:
+        return ext[1:].upper()
+    names = ((pr.get("format") or {}).get("format_name") or "").split(",")
+    for n in names:
+        if n in _FORMAT_NAMES:
+            return _FORMAT_NAMES[n]
+    return (names[0] or ext[1:] or "?").upper()
+
+
 def file_kind(path: str) -> str:
     ext = Path(path).suffix.lower()
     if ext in IMAGE_EXTS:
@@ -1144,13 +1175,13 @@ class ConvertManager:
             try:
                 size = os.path.getsize(item.src)
                 ext = Path(item.src).suffix.lower()
-                animated = False
-                if ext in IMAGE_EXTS:
+                # el tipo sale del contenido: un PNG renombrado «.0» sigue siendo una imagen
+                img = sniff_image(item.src) if ext not in VIDEO_EXTS and ext not in AUDIO_EXTS else None
+                animated = bool(img and img[3])
+                if img:
+                    item.fmt = img[0] if not (animated and img[0] == "PNG") else "APNG"
                     from PIL import Image
                     with Image.open(item.src) as im:
-                        animated = getattr(im, "n_frames", 1) > 1 and ext == ".gif"
-                        item.fmt = (im.format or ext[1:]).upper().replace("JPEG", "JPG")
-                        w, h = im.width, im.height
                         im.seek(0)
                         im.draft("RGB", (320, 320))
                         thumb = im.convert("RGB")
@@ -1158,10 +1189,12 @@ class ConvertManager:
                     if not animated:
                         item.kind = "image"
                         item.has_video = item.has_audio = False
-                        item.details = f"{w}×{h} · {fmt_bytes(size)}"
+                        item.details = f"{img[1]}×{img[2]} · {fmt_bytes(size)}"
                         item.info = item.details
+                        if item.target and item.target not in [k for k, _l, _e in item.targets()]:
+                            item.target = None
                         on_thumb(item, thumb)
-                if ext not in IMAGE_EXTS or animated:
+                if not img or animated:
                     pr = media.probe(item.src)
                     dur = media.duration_of(pr)
                     item.duration = dur
@@ -1170,6 +1203,8 @@ class ConvertManager:
                         raise media.MediaError("no tiene video ni audio")
                     item.kind = "video" if vs else "audio"
                     item.has_video, item.has_audio = bool(vs), bool(aus)
+                    if not animated:
+                        item.fmt = format_label(item.src, pr)
                     bits = []
                     if vs:
                         v = vs[0]

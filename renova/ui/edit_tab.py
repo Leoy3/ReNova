@@ -203,7 +203,7 @@ class EditTab(tk.Frame):
 
     def load(self, paths: list, mode: str = "replace", at: float | None = None):
         paths = [os.path.normpath(p) for p in paths if os.path.isfile(p)]
-        images = [p for p in paths if core.file_kind(p) == "image" and not p.lower().endswith(".gif")]
+        images = [p for p in paths if (lambda im: im is not None and not im[3])(core.sniff_image(p))]
         paths = [p for p in paths if p not in images]
         if images:
             self.app.toast.show("Las imágenes no se pueden editar acá; usá la pestaña Convertir", "warn")

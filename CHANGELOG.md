@@ -3,6 +3,10 @@
 Cada viñeta de la versión actual aparece en el aviso de actualización dentro del programa
 (tools/build.py la copia a `latest.json`). Escribilas para quien usa ReNova, no para quien lo programa.
 
+## 2.4.5
+
+- Convertir reconoce el tipo de archivo por su contenido y no por la extensión: una imagen con un nombre raro (por ejemplo «.0») ahora ofrece formatos de imagen, y un GIF animado sigue ofreciendo video.
+
 ## 2.4.4
 
 - Zoom de la línea de tiempo con Alt + rueda del mouse, como en Premiere (en Recortar y en el recorte antes de descargar). La rueda sola o con Ctrl desplaza hacia los costados.

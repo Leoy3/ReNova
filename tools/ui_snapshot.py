@@ -708,6 +708,14 @@ elif SCENARIO == "wheel":
         (3000, dlg_report),
     ]
 
+elif SCENARIO == "convertfiles":
+    # Convertir con los archivos de CONV_FILES (separados por ;): para revisar la detección del formato
+    files = [f for f in os.environ.get("CONV_FILES", "").split(";") if f]
+    steps += [
+        (600, lambda: (a.show_tab("convert"), a.converts.add_files(files))),
+        (3000, lambda: snap("98_convert_detect")),
+    ]
+
 root.after(100, run_steps)
 root.after(180000, lambda: os._exit(1))
 a.run()
